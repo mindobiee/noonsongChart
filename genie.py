@@ -7,7 +7,6 @@ import pymysql
 driver = webdriver.Chrome(ChromeDriverManager().install())
 
 # create cursor
-
 conn = pymysql.connect(host = "127.0.0.1",
                        user = 'root', passwd = '132365', db = 'gradproj')
 cur = conn.cursor()
@@ -21,6 +20,7 @@ options.add_argument("--disable-gpu")
 options.add_argument("window-size=1920x1080")
 options.add_argument("lang=ko_KR")
 options.add_argument("user-agent=Chrome/77.0.3865.90")
+
 
 driver.get('https://genie.co.kr/chart/top200')
 source = driver.page_source
