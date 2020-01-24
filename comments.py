@@ -13,6 +13,7 @@ driver = webdriver.Chrome(ChromeDriverManager().install())
 
 conn = pymysql.connect(host = "127.0.0.1",
                        user = 'root', passwd = '132365', db = 'gradproj')
+cur = conn.cursor()
 
 # options to look like a human
 options = webdriver.ChromeOptions()
@@ -31,6 +32,7 @@ bs = BeautifulSoup(source, 'html.parser')
 
 # 각 곡 상세 페이지에서 댓글 페이지 바꾸는 함수
 # 페이지 옆에 다음 버튼 계속 누름. 마지막 페이지라는 alert 뜰 때까지
+# alert 만나면 확인버튼 클릭 후 False 리턴
 def change_pages():
     temp = driver.find_element_by_class_name("page-nav")
     button_pages = temp.find_element_by_class_name("next")  
@@ -40,7 +42,6 @@ def change_pages():
     try:
         alert = Alert(driver)
         alert.accept()
-        time.sleep(1)
 
     except NoAlertPresentException:
         return True
@@ -71,30 +72,28 @@ def change_songs(song_num):
     source = driver.page_source
 
 def crawlComments(bs):
-    cur = conn.cursor()
-
     replies = bs.find_all(class_="reply-text")
 
     writerId = [ i.find("strong").find("a").get_text() for i in replies ]
     comment = [ i.find("p").get_text() for i in replies]
 
-        # 각 곡별 페이지별 댓글들 DB에 저장
+    # 각 곡별 페이지별 댓글들 DB에 저장
     for i in range(0, len(writerId)):
         query = """
-            insert into comments_ (writerId, comment) values ('%s', '%s')
+            insert ignore into comments (writerId, comment) values ('%s', '%s");
         """%( str(writerId[i]), str(comment[i]) )
             
-        try:
-            cur.execute(query)
-        except pymysql.IntegrityError:
-            conn.commit()
-            cur.close()
-            cur = conn.cursor()
+        cur.execute(query)
+    time.sleep(1)
 
-            continue
+for i in range(1, 2):
+    if i == 50:
+        fiftyone_to_hundred = driver.find_element_by_link_text("51 ~ 100 위")
+        fiftyone_to_hundred.click()
 
-for i in range(6, 7):
-    change_songs(i)
+        change_songs(i) 
+    else:
+        change_songs(i) 
 
 conn.commit()
 cur.close()
