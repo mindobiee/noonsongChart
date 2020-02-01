@@ -22,15 +22,7 @@ options.add_argument("user-agent=Chrome/77.0.3865.90")
 
 driver.get("https://music.bugs.co.kr/chart")
 source = driver.page_source
-
 bs=BeautifulSoup(source,'html.parser')
-
-table = bs.find('table', {'class':'list trackList byChart'})
-tbody = table.tbody
-#print(tbody)
-
-#trs = tbody.find_all('tr')
-#for title, artist, album in enumerate(trs):
 
 top100_title = bs.find_all('p', class_="title")
 top100_artist = bs.find_all('p', class_="artist")
@@ -40,41 +32,37 @@ artist = [bs.select_one('p:nth-of-type(1) a').text for bs in top100_artist]
 title = [i.get_text().strip() for i in top100_title]
 albumtitle = [i.get_text().strip() for i in top100_albumtitle]
 
-#for i,tit in enumerate(title) :
-#    print('%d : %s'%(i+1,tit))
+# to certify artists
 for i,art in enumerate(artist):
-        print('%d : %s' % (i+1, art))
-    #중복되는 가수명 삭제하기    
-#for i,alb in enumerate(albumtitle) :
-#    print('%d : %s'%(i+1,alb))
-    #1번째 row 제외시키기 (삽입할 때)
-
-
-#del artist[1:6]
-
+        print('%d: %s' % (i+1, art))
+   
 query = "drop table if exists musicList"
 cur.execute(query)
 
 query1 = """
     create table musicList(
-    title varchar(100),
-    artist varchar(100),
-    albumtitle varchar(100),
+    title varchar(100) not null,
+    artist varchar(100) not null,
+    albumtitle varchar(100) not null,
     id varchar(100),
+    ranking INT,
+    likes INT,
+    comment INT,
     primary key(id)
     );
 """
 cur.execute(query1)
 
 for i in range(0,100):
+    newId = title[i].replace(',', '#').replace('&', '#').replace('(', '#').split('#')[0] + \
+            albumtitle[i+1].replace(',', '#').replace('&', '#').replace('(', '#').split('#')[0]
     query2 = """
-    insert into musicList values ("%s", "%s", "%s", "%s"); """ %(str(title[i]), str(artist[i]), str(albumtitle[i+1]), str(title[i])+str(albumtitle[i+1]))
+    insert into musicList 
+    values ("%s", "%s", "%s", "%s", "%s", "%s", "%s"); 
+    """ %(str(title[i]), str(artist[i]), str(albumtitle[i+1]), newId, i+1,0,0)
     cur.execute(query2)
-
 
 conn.commit()
 cur.close()
 conn.close()
 driver.quit()
-
-# C:\Users\user\Downloads\chromedriver_win32
