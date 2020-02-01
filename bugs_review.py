@@ -1,11 +1,10 @@
 from selenium import webdriver
 from bs4 import BeautifulSoup
 import pymysql
-from selenium.webdriver.common.by import By
+from selenium.common.exceptions import ElementNotInteractableException
 from selenium.webdriver.common.keys import Keys
 import pandas as pd
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+import warnings
 
 crawling_num = 0
 comment_num = 0
@@ -18,18 +17,49 @@ driver.implicitly_wait(3)
 conn = pymysql.connect(host="127.0.0.1",
                        user='root', passwd='960919', db="gradualDB")
 cur = conn.cursor()
+
 # options to look like a human
 options = webdriver.ChromeOptions()
 options.add_argument("--headless")
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-gpu")
-options.add_argument("window-size=1920x1080")
+
+options.add_argument("window-size=1080x1080")
 options.add_argument("lang=ko_KR")
 options.add_argument("user-agent=Chrome/77.0.3865.90")
 
 driver.get('https://music.bugs.co.kr/chart')
 source = driver.page_source
 bs = BeautifulSoup(source, 'html.parser')
+
+# url = 'http://music.bugs.co.kr/chart'
+# headers = {'User-Agent : Chrome/77.0.3865.90' }
+# result = requests.get(url, headers= headers)
+
+def button() :
+    # changing pages
+    # //*[@id="comments"]/div/p[4]/a
+    # /html/body/div[2]/div[2]/article/section[6]/div/p[4]/a
+
+    global crawling_num
+    try:
+        next_page = driver.find_element_by_xpath("//*[@id='comments']/div/p[4]/a")
+        next_page.send_keys(Keys.ENTER)
+        driver.implicitly_wait(3)  # seconds
+
+        # counting # of comments
+        users = bs.find_all('span', class_="user")
+        user = [i.get_text().strip() for i in users]
+        comment_num = len(user)
+
+        # verifying #of comments & changing pages
+        print("comment num :" + str(comment_num))
+        crawling_num = crawling_num + 1
+        print("# of changing pages :" + str(crawling_num))
+
+    except ElementNotInteractableException: #interactable error
+        return False
+    return True
 
 
 # Crawling comments :)
@@ -46,11 +76,14 @@ def crawlcomments(bs):
     album = driver.find_element_by_xpath(
         "/html/body/div[2]/div[2]/article/section[1]/div/div[1]/table/tbody/tr[3]/td/a").text.strip()
 
+    # ignore unique key duplicate warning
+    warnings.filterwarnings("ignore")
+
     # inserting the data into table columns & excel file
     result = []
     for i in range(len(users)):
         query2 = """
-        insert into reviewList values ("%s", "%s", "%s"); """ % (
+        insert ignore into reviewList values ("%s", "%s", "%s"); """ % (
         str(users[i]), str(comments[i + 1]), str(title) + str(album))
         cur.execute(query2)
         result.append([users[i], comments[i + 1]])
@@ -77,7 +110,7 @@ def change_songs(song_num):
             create table reviewList(
             user varchar(100),
             comment varchar(500),
-            id varchar(100)
+            id varchar(100),
             primary key (id, user)
             );
         """
@@ -86,43 +119,20 @@ def change_songs(song_num):
     source = driver.page_source
     bs = BeautifulSoup(source, 'html.parser')
 
+    # the # 0f total comment
     totalcomment = driver.find_element_by_xpath("//*[@id='totalComment']").text
     print('total # of comments :' + str(totalcomment))
 
+    # the # of comment in this page
     users = bs.find_all('span', class_="user")
     user = [i.get_text().strip() for i in users]
     comment_num = len(user)
     print('# of comments : ' + str(comment_num))
 
-    # if # of comments differ from totalcomment
-    while int(comment_num) != int(totalcomment):
-
-        # changing pages
-        next_page = driver.find_element_by_xpath("//*[@id='comments']/div/p[4]/a")
-        # //*[@id="comments"]/div/p[4]/a
-        # /html/body/div[2]/div[2]/article/section[6]/div/p[4]/a
-        next_page.send_keys(Keys.ENTER)
-        driver.implicitly_wait(3)  # seconds
-
+    # 실행 안하는 조건 : comment button이 없을 때는 실행하지 않는다...!
+    while button():
         source = driver.page_source
         bs = BeautifulSoup(source, 'html.parser')
-
-        # counting # of comments
-        users = bs.find_all('span', class_="user")
-        user = [i.get_text().strip() for i in users]
-        comment_num = len(user)
-
-        # verifying #of comments & changing pages
-        print("comment num :" + str(comment_num))
-        crawling_num = crawling_num + 1
-        print("# of changing pages :" + str(crawling_num))
-
-        listcomments = bs.find_all('div', class_="comment")
-        comments = [i.find("p").text.strip() for i in listcomments]
-
-        # verifying the crawling results(user, comment)
-        for i in range(len(user)):
-            print('%d : %s : %s' % (i, user[i], comments[i + 1]))
 
     crawlcomments(bs)
     print("crawling ends")
@@ -131,22 +141,11 @@ def change_songs(song_num):
     driver.get('https://music.bugs.co.kr/chart')
     source = driver.page_source
 
-    '''
-  crawlComments(bs)
-    while(change_pages()):
-        source = driver.page_source
-        bs = BeautifulSoup(source,'html.parser')
-        crawlComments(bs)
-    print("crawling ends") 
-    
-'''
-
 
 # the start point of the whole program
 if __name__ == '__main__':
     song_num = int(input("song_num :"))
     change_songs(song_num)
-
     # conn.commit()
     cur.close()
     conn.close()
