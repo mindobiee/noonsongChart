@@ -7,7 +7,6 @@ import pandas as pd
 import warnings
 
 crawling_num = 0
-comment_num = 0
 
 chromedriver_dir = r'C:\Users\user\Downloads\chromedriver_win32\chromedriver.exe'
 driver = webdriver.Chrome(chromedriver_dir)
@@ -32,9 +31,6 @@ driver.get('https://music.bugs.co.kr/chart')
 source = driver.page_source
 bs = BeautifulSoup(source, 'html.parser')
 
-# url = 'http://music.bugs.co.kr/chart'
-# headers = {'User-Agent : Chrome/77.0.3865.90' }
-# result = requests.get(url, headers= headers)
 
 def button() :
     # changing pages
@@ -47,13 +43,6 @@ def button() :
         next_page.send_keys(Keys.ENTER)
         driver.implicitly_wait(3)  # seconds
 
-        # counting # of comments
-        users = bs.find_all('span', class_="user")
-        user = [i.get_text().strip() for i in users]
-        comment_num = len(user)
-
-        # verifying #of comments & changing pages
-        print("comment num :" + str(comment_num))
         crawling_num = crawling_num + 1
         print("# of changing pages :" + str(crawling_num))
 
@@ -65,28 +54,47 @@ def button() :
 # Crawling comments :)
 def crawlcomments(bs):
 
-    # crawling (user, comment)
-    users = bs.find_all('span', class_="user")
-    listcomments = bs.find_all('div', class_="comment")
-    comments = [i.find("p").text.strip() for i in listcomments]
+    # crawling (user, comment) except re-comment
+    # 대댓글 처리하기 #comments > div > ul > li:nth-child(1) > div.comment > p
+    users = bs.select('#comments > div > ul > li > span')
+    listcomments = bs.select('#comments > div > ul > li > div.comment > p')
+    
     users = [i.get_text().strip() for i in users]
+    comments = [i.get_text().strip() for i in listcomments]
+    
 
     # making id by using title, album
     title = driver.find_element_by_xpath("/html/body/div[2]/div[2]/article/header/div/h1").text.strip()
     album = driver.find_element_by_xpath(
         "/html/body/div[2]/div[2]/article/section[1]/div/div[1]/table/tbody/tr[3]/td/a").text.strip()
 
+    like = bs.select_one('#container > section.sectionPadding.summaryInfo.summaryTrack > div > div.etcInfo > span > a > span > em').get_text()
+    like = like.replace(",", "")
+    print("like: " + like)
+    # add into musiclist later
+
     # ignore unique key duplicate warning
     warnings.filterwarnings("ignore")
+
+    newId = title.replace(',', '#').replace('&', '#').replace('(', '#').split('#')[0] + \
+            album.replace(',', '#').replace('&', '#').replace('(', '#').split('#')[0]
+    print("newId :" + newId)
+
+
+    query = """
+            update musicList set likes = "%s", comment = "%s" where id = "%s"; 
+            """ % ( int(like), len(users), newId )
+    cur.execute(query)
 
     # inserting the data into table columns & excel file
     result = []
     for i in range(len(users)):
+        comments[i]=comments[i].replace("\"", "")
         query2 = """
         insert ignore into reviewList values ("%s", "%s", "%s"); """ % (
-        str(users[i]), str(comments[i + 1]), str(title) + str(album))
+        str(users[i]), str(comments[i]), newId)
         cur.execute(query2)
-        result.append([users[i], comments[i + 1]])
+        result.append([users[i], comments[i]])
 
     conn.commit()
     df = pd.DataFrame(result, columns=['users', 'comments'])
@@ -96,14 +104,14 @@ def crawlcomments(bs):
 # selecting the song number&show the pages
 def change_songs(song_num):
 
-    global comment_num
     global crawling_num
     xpath_songs = "/html/body/div[2]/div[2]/article/section/div/div[1]/table/tbody/tr[" + str(song_num) + "]/td[4]/a"
     button_songs = driver.find_element_by_xpath(xpath_songs)
     button_songs.send_keys(Keys.ENTER)
     driver.implicitly_wait(3)
 
-    # making a table(reviewlist)
+    # prerequsite : review Table exists, no need to make again, just update.
+    '''    
     query = "drop table if exists reviewList"
     cur.execute(query)
     query1 = """
@@ -114,8 +122,8 @@ def change_songs(song_num):
             primary key (id, user)
             );
         """
-    # foreign key(id) references musicList(id)
     cur.execute(query1)
+    '''
     source = driver.page_source
     bs = BeautifulSoup(source, 'html.parser')
 
@@ -129,7 +137,7 @@ def change_songs(song_num):
     comment_num = len(user)
     print('# of comments : ' + str(comment_num))
 
-    # 실행 안하는 조건 : comment button이 없을 때는 실행하지 않는다...!
+    # condition : if comment button doesn't exist, it stops
     while button():
         source = driver.page_source
         bs = BeautifulSoup(source, 'html.parser')
