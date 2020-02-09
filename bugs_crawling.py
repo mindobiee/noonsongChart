@@ -183,8 +183,6 @@ if __name__ == '__main__':
     while i < 101:
         change_songs(i)
         i = i+1
-        if i == 100:
-            break
 
     conn.commit()
     cur.close()
