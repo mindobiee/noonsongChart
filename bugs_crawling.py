@@ -63,11 +63,13 @@ def crawlcomments(bs):
 
     # making id by using title, album
     title = driver.find_element_by_xpath("/html/body/div[2]/div[2]/article/header/div/h1").text.strip()
-    album = driver.find_element_by_xpath(
+    verify = driver.find_element_by_xpath("//*[@id='container']/section[1]/div/div[1]/table/tbody/tr[2]/th").text.strip()
+    if verify == '앨범':
+        album = driver.find_element_by_xpath(
+            "/html/body/div[2]/div[2]/article/section[1]/div/div[1]/table/tbody/tr[2]/td/a").text.strip()
+    else :
+        album = driver.find_element_by_xpath(
         "/html/body/div[2]/div[2]/article/section[1]/div/div[1]/table/tbody/tr[3]/td/a").text.strip()
-    # #container > section.sectionPadding.summaryInfo.summaryTrack > div > div.basicInfo > table > tbody > tr:nth-child(2) > td > a
-    # //*[@id="container"]/section[1]/div/div[1]/table/tbody/tr[2]/td/a
-    # 여기서 고치기...!!!
 
     artist = bs.select_one('#container > section.sectionPadding.summaryInfo.summaryTrack > div > div.basicInfo > table > tbody > tr:nth-child(1) > td > a').get_text()
     like = bs.select_one('#container > section.sectionPadding.summaryInfo.summaryTrack > div > div.etcInfo > span > a > span > em').get_text()
@@ -88,13 +90,9 @@ def crawlcomments(bs):
     else:
         like_cnt = int(like) - int(temp[0][0])
 
-    #query = """ select count(*) from reviewlist where id = %s; """
-    #cur.execute(query, newId)
-    #comment_cnt = cur.fetchall()
-
     query = """
-            replace into musiclist values ("%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s") ; 
-            """ % (str(title), str(artist), str(album), newId, rank, int(like), int(like_cnt), len(users))
+           update musiclist set likes = "%s", like_cnt = "%s", comment ="%s" where id = "%s"; 
+            """ % (int(like), int(like_cnt), len(users), newId)
     cur.execute(query)
 
     # inserting the data into table columns & excel file
@@ -104,7 +102,7 @@ def crawlcomments(bs):
         query2 = """
         insert ignore into reviewlist (id, user, comment) values ("%s", "%s", "%s"); """ % (
         newId, str(users[i]), str(comments[i]))
-        cur.execute(query2) 
+        cur.execute(query2)
         result.append([users[i], comments[i]])
 
     conn.commit()
@@ -162,8 +160,7 @@ def crawl_comments(bs, latest_comment):
     return False
 
 if __name__ == '__main__':
-    # song_num = int(input("song_num :"))
-
+   
     top100_title = bs.find_all('p', class_="title")
     top100_artist = bs.find_all('p', class_="artist")
     top100_albumtitle = bs.find_all('a', class_="album")
@@ -171,13 +168,6 @@ if __name__ == '__main__':
     artist = [bs.select_one('p:nth-of-type(1) a').text for bs in top100_artist]
     title = [i.get_text().strip() for i in top100_title]
     albumtitle = [i.get_text().strip() for i in top100_albumtitle]
-
-    # for i,tit in enumerate(title) :
-    #    print('%d : %s'%(i+1,tit))
-    for i, art in enumerate(artist):
-        print('%d: %s' % (i + 1, art))
-    # for i,alb in enumerate(albumtitle) :
-    #    print('%d : %s'%(i+1,alb))
 
     for i in range(0, 100):
         newId = title[i].replace(',', '#').replace('&', '#').replace('(', '#').split('#')[0] + \
