@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import pymysql
 import time
 import warnings
-from datetime import datetime, timedelta
 from selenium.common.exceptions import ElementNotInteractableException
 from selenium.webdriver.common.keys import Keys
 
@@ -71,7 +70,6 @@ def crawlcomments(bs):
         album = driver.find_element_by_xpath(
         "/html/body/div[2]/div[2]/article/section[1]/div/div[1]/table/tbody/tr[3]/td/a").text.strip()
 
-    artist = bs.select_one('#container > section.sectionPadding.summaryInfo.summaryTrack > div > div.basicInfo > table > tbody > tr:nth-child(1) > td > a').get_text()
     like = bs.select_one('#container > section.sectionPadding.summaryInfo.summaryTrack > div > div.etcInfo > span > a > span > em').get_text()
     like = like.replace(",", "")
     print("like: " + like)
@@ -89,6 +87,7 @@ def crawlcomments(bs):
         like_cnt = 0
     else:
         like_cnt = int(like) - int(temp[0][0])
+
 
     query = """
            update musiclist set likes = "%s", like_cnt = "%s", comment ="%s" where id = "%s"; 
@@ -160,7 +159,7 @@ def crawl_comments(bs, latest_comment):
     return False
 
 if __name__ == '__main__':
-   
+
     top100_title = bs.find_all('p', class_="title")
     top100_artist = bs.find_all('p', class_="artist")
     top100_albumtitle = bs.find_all('a', class_="album")
@@ -168,6 +167,31 @@ if __name__ == '__main__':
     artist = [bs.select_one('p:nth-of-type(1) a').text for bs in top100_artist]
     title = [i.get_text().strip() for i in top100_title]
     albumtitle = [i.get_text().strip() for i in top100_albumtitle]
+
+    # for i,tit in enumerate(title) :
+    #    print('%d : %s'%(i+1,tit))
+    for i, art in enumerate(artist):
+        print('%d: %s' % (i + 1, art))
+    # for i,alb in enumerate(albumtitle) :
+    #    print('%d : %s'%(i+1,alb))
+
+    query = "drop table if exists musiclist"
+    cur.execute(query)
+
+    create_table_musiclist = """
+        create table musiclist(
+            title varchar(100) not null,
+            artist varchar(100) not null,
+            album_title varchar(100) not null,
+            id varchar(100),
+            ranking INT,
+            likes INT,
+            like_cnt INT,
+            comment INT,
+            primary key(ranking)
+        );
+    """
+    cur.execute(create_table_musiclist)
 
     for i in range(0, 100):
         newId = title[i].replace(',', '#').replace('&', '#').replace('(', '#').split('#')[0] + \
