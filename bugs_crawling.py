@@ -1,4 +1,3 @@
-import pandas as pd
 from selenium import webdriver
 from bs4 import BeautifulSoup
 import pymysql
@@ -9,6 +8,8 @@ from selenium.webdriver.common.keys import Keys
 
 crawling_num = 0
 rank = 0
+Ids = [None] *101  # newId 저장하는 배열 다시 확인할 것!
+tmp = 0
 
 # ignore unique key duplicate warning
 warnings.filterwarnings("ignore")
@@ -50,9 +51,10 @@ def button() :
         return False
     return True
 
-def crawlcomments(bs):
+def crawlcomments(bs,latest_comment):
 
     global rank
+    global tmp
     rank += rank
     # crawling (user, comment) except re-comment
     users = bs.select('#comments > div > ul > li > span')
@@ -81,37 +83,42 @@ def crawlcomments(bs):
             album.replace(',', '#').replace('&', '#').replace('(', '#').split('#')[0]
     print("newId :" + newId)
 
-    cur.execute("select likes from musiclist where id = %s;", newId)  # 이전 like_sum
+    cur.execute("select likes from ex_musicList_bugs where id = %s;", newId)  # 이전 like_sum
     temp = cur.fetchall()
     if len(temp) == 0:
         like_cnt = 0
     else:
         like_cnt = int(like) - int(temp[0][0])
 
+    cur.execute("select count(*) from comments_bugs where id = %s;", newId)
+    temp = cur.fetchall()
+    if len(temp) == 0:
+        comment_cnt = 0
+    else:
+        comment_cnt = int(len(users)) - int(temp[0][0])
+
 
     query = """
-           update musiclist set likes = "%s", like_cnt = "%s", comment ="%s" where id = "%s"; 
-            """ % (int(like), int(like_cnt), len(users), newId)
+           update musicList_bugs set likes = "%s", like_cnt = "%s", comment ="%s", comment_cnt="%s" where id = "%s"; 
+            """ % (int(like), int(like_cnt), len(users), int(comment_cnt), newId)
     cur.execute(query)
 
-    # inserting the data into table columns & excel file
-    result = []
-    for i in range(len(users)):
-        comments[i]=comments[i].replace("\"", "")
+    for i in range(len(users)) :
+        if (latest_comment[0] == users[i]) and (latest_comment[1] == comments[i]):
+            return  # no need to crawl
+        comments[i] = comments[i].replace("\"", "")
         query2 = """
-        insert ignore into reviewlist (id, user, comment) values ("%s", "%s", "%s"); """ % (
+        insert ignore into comments_bugs (id, writerId, comment) values ("%s", "%s", "%s"); """ % (
         newId, str(users[i]), str(comments[i]))
         cur.execute(query2)
-        result.append([users[i], comments[i]])
+        #result.append([users[i], comments[i]])
 
     conn.commit()
-    df = pd.DataFrame(result, columns=['users', 'comments'])
-    df.to_excel("test.xlsx", encoding="utf-8")
-
 
 def change_songs(song_num):
 
     global crawling_num
+    global Ids
     xpath_songs = "/html/body/div[2]/div[2]/article/section/div/div[1]/table/tbody/tr[" + str(song_num) + "]/td[4]/a"
     button_songs = driver.find_element_by_xpath(xpath_songs)
     button_songs.send_keys(Keys.ENTER)
@@ -119,15 +126,15 @@ def change_songs(song_num):
 
     source = driver.page_source
     bs = BeautifulSoup(source, 'html.parser')
+    print("crawling #%d", song_num)
 
-    cur.execute("select user, comment from reviewlist where id = %s order by time_of_crawl limit 1;", newId)
+    cur.execute("select user, comment from reviewlist where id = %s order by time_of_crawl limit 1;", Ids[song_num])
     latest_comment = cur.fetchall()
 
     if len(latest_comment) == 0:
         latest_comment =[","]
     else :
         latest_comment = latest_comment[0]
-
 
     # condition : if comment button doesn't exist, it stops
     while (button()):
@@ -136,8 +143,9 @@ def change_songs(song_num):
         time.sleep(1)
         source = driver.page_source
         bs = BeautifulSoup(source, 'html.parser')
+    # crawling again !
 
-    crawlcomments(bs)
+    crawlcomments(bs, latest_comment)
     print("crawling ends")
 
     # going back to main chart page
@@ -147,6 +155,7 @@ def change_songs(song_num):
 
 def crawl_comments(bs, latest_comment):
 
+    global tmp
     users = bs.select('#comments > div > ul > li > span')
     listcomments = bs.select('#comments > div > ul > li > div.comment > p')
     comments = [i.get_text().strip() for i in listcomments]
@@ -154,8 +163,8 @@ def crawl_comments(bs, latest_comment):
 
     for i in range(len(users)) :
         if(latest_comment[0] == users[i]) and (latest_comment[1] == comments[i]):
+            tmp = i
             return True
-
     return False
 
 if __name__ == '__main__':
@@ -168,38 +177,36 @@ if __name__ == '__main__':
     title = [i.get_text().strip() for i in top100_title]
     albumtitle = [i.get_text().strip() for i in top100_albumtitle]
 
-    # for i,tit in enumerate(title) :
-    #    print('%d : %s'%(i+1,tit))
-    for i, art in enumerate(artist):
-        print('%d: %s' % (i + 1, art))
-    # for i,alb in enumerate(albumtitle) :
-    #    print('%d : %s'%(i+1,alb))
-
-    query = "drop table if exists musiclist"
+    query = "drop table if exists ex_musicList_bugs"
     cur.execute(query)
 
-    create_table_musiclist = """
-        create table musiclist(
-            title varchar(100) not null,
-            artist varchar(100) not null,
-            album_title varchar(100) not null,
-            id varchar(100),
+    query0 = "RENAME TABLE musicList_bugs TO ex_musicList_bugs"
+    cur.execute(query0)
+
+    create_table_musicList_bugs = """
+        create table musicList_bugs(
             ranking INT,
+            title varchar(100),
+            artist varchar(100),
+            album_title varchar(100),
+            id varchar(100),
             likes INT,
             like_cnt INT,
             comment INT,
+            comment_cnt INT,
             primary key(ranking)
         );
     """
-    cur.execute(create_table_musiclist)
+    cur.execute(create_table_musicList_bugs)
 
     for i in range(0, 100):
         newId = title[i].replace(',', '#').replace('&', '#').replace('(', '#').split('#')[0] + \
                 albumtitle[i + 1].replace(',', '#').replace('&', '#').replace('(', '#').split('#')[0]
+        Ids[i] = newId
         query2 = """
-        insert into musiclist 
-        values ("%s", "%s", "%s", "%s", "%s", "%s", "%s","%s"); 
-        """ % (str(title[i]), str(artist[i]), str(albumtitle[i + 1]), newId, i + 1, 0, 0, 0)
+        insert into musicList_bugs
+        values ("%s", "%s", "%s", "%s", "%s", "%s", "%s","%s", "%s"); 
+        """ % (i + 1,str(title[i]), str(artist[i]), str(albumtitle[i + 1]), newId, 0, 0, 0, 0)
         cur.execute(query2)
 
     print("crawling starts")
