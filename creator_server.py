@@ -19,7 +19,7 @@ create_table_musicList_bugs = """
            comments_sum INT,
            comments_cnt INT,
            primary key(ranking)
-       );
+       )ENGINE=InnoDB DEFAULT CHARSET=utf8;
    """
 cur.execute(create_table_musicList_bugs)
 
@@ -30,7 +30,7 @@ create_table_comments_bugs="""
         comment varchar(500),
         time_of_crawl datetime default current_timestamp,
         primary key(id, writerId)
-        );
+        )ENGINE=InnoDB DEFAULT CHARSET=utf8;
 """
 
 cur.execute(create_table_comments_bugs)
