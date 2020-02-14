@@ -1,4 +1,5 @@
 from selenium import webdriver
+from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import pymysql
 import time
@@ -9,8 +10,11 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 crawling_num = 0
 rank = 0
-Ids = [None] *101
 tmp = 0
+artist =[]
+title =[]
+albumTitle=[]
+Ids = []
 
 # ignore unique key duplicate warning
 warnings.filterwarnings("ignore")
@@ -27,9 +31,6 @@ options.add_argument("--disable-gpu")
 options.add_argument("window-size=1920x1080")
 options.add_argument("lang=ko_KR")
 options.add_argument("user-agent=Chrome/77.0.3865.90")
-
-#chromedriver_dir = r'/usr/bin/chromedriver'
-#driver = webdriver.Chrome(executable_path= chromedriver_dir, chrome_options=options)
 
 driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
 
@@ -128,7 +129,7 @@ def change_songs(song_num):
     bs = BeautifulSoup(source, 'html.parser')
     print("crawling #%d", song_num)
 
-    cur.execute("select user, comment from reviewlist where id = %s order by time_of_crawl limit 1;", Ids[song_num])
+    cur.execute("select writerId, comment from comments_bugs where id = %s order by time_of_crawl limit 1;", Ids[song_num])
     latest_comment = cur.fetchall()
 
     if len(latest_comment) == 0:
@@ -158,8 +159,8 @@ def crawl_comments(bs, latest_comment):
 
     global tmp
     users = bs.select('#comments > div > ul > li > span')
-    listcomments = bs.select('#comments > div > ul > li > div.comment > p')
-    comments = [i.get_text().strip() for i in listcomments]
+    listComments = bs.select('#comments > div > ul > li > div.comment > p')
+    comments = [i.get_text().strip() for i in listComments]
     users = [i.get_text().strip() for i in users]
 
     for i in range(len(users)) :
@@ -172,11 +173,18 @@ if __name__ == '__main__':
 
     top100_title = bs.find_all('p', class_="title")
     top100_artist = bs.find_all('p', class_="artist")
-    top100_albumtitle = bs.find_all('a', class_="album")
+    top100_albumTitle = bs.find_all('a', class_="album")
 
-    artist = [bs.select_one('p:nth-of-type(1) a').text for bs in top100_artist]
+    artist = [i.select_one('a').text for i in top100_artist]
     title = [i.get_text().strip() for i in top100_title]
-    albumtitle = [i.get_text().strip() for i in top100_albumtitle]
+    albumTitle = [i.get_text().strip() for i in top100_albumTitle]
+
+    #for i,tit in enumerate(title) :
+    #    print('%d : %s'%(i+1,tit))
+    for i, art in enumerate(artist):
+        print('%d: %s' % (i + 1, art))
+    #for i,alb in enumerate(albumTitle) :
+    #    print('%d : %s'%(i+1,alb))
 
     query = "drop table if exists ex_musicList_bugs"
     cur.execute(query)
@@ -196,18 +204,18 @@ if __name__ == '__main__':
             comments_sum INT,
             comments_cnt INT,
             primary key(ranking)
-        );
+        )ENGINE=InnoDB DEFAULT CHARSET=utf8;
     """
     cur.execute(create_table_musicList_bugs)
 
     for i in range(0, 100):
         newId = title[i].replace(',', '#').replace('&', '#').replace('(', '#').split('#')[0] + \
-                albumtitle[i + 1].replace(',', '#').replace('&', '#').replace('(', '#').split('#')[0]
-        Ids[i] = newId
+                albumTitle[i + 1].replace(',', '#').replace('&', '#').replace('(', '#').split('#')[0]
+        Ids.append(newId)
         query2 = """
         insert into musicList_bugs
         values ("%s", "%s", "%s", "%s", "%s", "%s", "%s","%s", "%s"); 
-        """ % (i + 1,str(title[i]), str(artist[i]), str(albumtitle[i + 1]), newId, 0, 0, 0, 0)
+        """ % (i + 1,str(title[i]), str(artist[i]), str(albumTitle[i + 1]), newId, 0, 0, 0, 0)
         cur.execute(query2)
 
     print("crawling starts")
