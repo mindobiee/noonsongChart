@@ -178,11 +178,11 @@ if __name__ == '__main__':
 
     create_table_musicList_bugs = """
         create table musicList_bugs(
-           ranking INT,
+           id varchar(100),
            title varchar(100),
            artist varchar(100),
            album_title varchar(100),
-           id varchar(100),
+           ranking INT,
            like_sum INT, 
            like_cnt INT,
            comments_sum INT,
