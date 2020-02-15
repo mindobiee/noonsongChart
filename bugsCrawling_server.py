@@ -1,5 +1,4 @@
 from selenium import webdriver
-from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import pymysql
 import time
@@ -53,7 +52,7 @@ def button() :
         return False
     return True
 
-def crawlcomments(bs,latest_comment):
+def crawlcomments(bs,latest_comment,song_num):
 
     global rank
     global tmp
@@ -63,26 +62,11 @@ def crawlcomments(bs,latest_comment):
     listcomments = bs.select('#comments > div > ul > li > div.comment > p')
     comments = [i.get_text().strip() for i in listcomments]
     users = [i.get_text().strip() for i in users]
-
-    # making id by using title, album
-    title = driver.find_element_by_xpath("/html/body/div[2]/div[2]/article/header/div/h1").text.strip()
-    verify = driver.find_element_by_xpath("//*[@id='container']/section[1]/div/div[1]/table/tbody/tr[2]/th").text.strip()
-    if verify == '앨범':
-        album = driver.find_element_by_xpath(
-            "/html/body/div[2]/div[2]/article/section[1]/div/div[1]/table/tbody/tr[2]/td/a").text.strip()
-    else :
-        album = driver.find_element_by_xpath(
-        "/html/body/div[2]/div[2]/article/section[1]/div/div[1]/table/tbody/tr[3]/td/a").text.strip()
-
     like = bs.select_one('#container > section.sectionPadding.summaryInfo.summaryTrack > div > div.etcInfo > span > a > span > em').get_text()
     like = like.replace(",", "")
     print("like: " + like)
 
-    # ignore unique key duplicate warning
-    warnings.filterwarnings("ignore")
-
-    newId = title.replace(',', '#').replace('&', '#').replace('(', '#').split('#')[0] + \
-            album.replace(',', '#').replace('&', '#').replace('(', '#').split('#')[0]
+    newId = Ids[song_num-1]
     print("newId :" + newId)
 
     cur.execute("select like_sum from ex_musicList_bugs where id = %s;", newId)  # 이전 like_sum
@@ -92,17 +76,17 @@ def crawlcomments(bs,latest_comment):
     else:
         like_cnt = int(like) - int(temp[0][0])
 
-    cur.execute("select count(*) from comments_bugs where id = %s;", newId)
+    cur.execute("select comments_sum from ex_musicList_bugs where id = %s;", newId)
     temp = cur.fetchall()
     if len(temp) == 0:
         comment_cnt = 0
     else:
         comment_cnt = int(len(users)) - int(temp[0][0])
-
+    img_url = 'https:' + bs.find(class_='photos').find("a").get('href')
 
     query = """
-           update musicList_bugs set like_sum = "%s", like_cnt = "%s", comments_sum ="%s", comments_cnt="%s" where id = "%s"; 
-            """ % (int(like), int(like_cnt), len(users), int(comment_cnt), newId)
+           update musicList_bugs set like_sum = "%s", like_cnt = "%s", comments_sum ="%s", comments_cnt="%s", img_url ="%s" where id = "%s"; 
+            """ % (int(like), int(like_cnt), len(users), int(comment_cnt), newId, str(img_url))
     cur.execute(query)
 
     for i in range(len(users)) :
@@ -127,9 +111,9 @@ def change_songs(song_num):
 
     source = driver.page_source
     bs = BeautifulSoup(source, 'html.parser')
-    print("crawling #%d", song_num)
+    print("crawling #", song_num)
 
-    cur.execute("select writerId, comment from comments_bugs where id = %s order by time_of_crawl limit 1;", Ids[song_num])
+    cur.execute("select writerId, comment from comments_bugs where id = %s order by time_of_crawl limit 1;", Ids[song_num-1])
     latest_comment = cur.fetchall()
 
     if len(latest_comment) == 0:
@@ -147,7 +131,7 @@ def change_songs(song_num):
         bs = BeautifulSoup(source, 'html.parser')
     # crawling again !
 
-    crawlcomments(bs, latest_comment)
+    crawlcomments(bs, latest_comment, song_num)
     print("crawling ends")
 
     # going back to main chart page
@@ -194,28 +178,30 @@ if __name__ == '__main__':
 
     create_table_musicList_bugs = """
         create table musicList_bugs(
-            ranking INT,
-            title varchar(100),
-            artist varchar(100),
-            album_title varchar(100),
-            id varchar(100),
-            like_sum INT,
-            like_cnt INT,
-            comments_sum INT,
-            comments_cnt INT,
-            primary key(ranking)
-        )ENGINE=InnoDB DEFAULT CHARSET=utf8;
+           ranking INT,
+           title varchar(100),
+           artist varchar(100),
+           album_title varchar(100),
+           id varchar(100),
+           like_sum INT, 
+           like_cnt INT,
+           comments_sum INT,
+           comments_cnt INT,
+           img_url varchar(200),
+           primary key(ranking)
+       )ENGINE=InnoDB DEFAULT CHARSET=utf8;
     """
     cur.execute(create_table_musicList_bugs)
 
     for i in range(0, 100):
-        newId = title[i].replace(',', '#').replace('&', '#').replace('(', '#').split('#')[0] + \
-                albumTitle[i + 1].replace(',', '#').replace('&', '#').replace('(', '#').split('#')[0]
+        newId = title[i].replace('`','\'').replace('’','\'').replace(',', '#').replace('&', '#').replace('(', '#').replace('[', '#').replace('<', '#').replace('{', '#').split('#')[0] + \
+                albumTitle[i + 1].replace('`','\'').replace('’','\'').replace('<', '').replace('{', '').replace('(', '').replace('[', '').split(' ')[0]
+        # 괄호 없애고, albumTitle -> 띄어쓰기 전까지만 출력
         Ids.append(newId)
         query2 = """
         insert into musicList_bugs
-        values ("%s", "%s", "%s", "%s", "%s", "%s", "%s","%s", "%s"); 
-        """ % (i + 1,str(title[i]), str(artist[i]), str(albumTitle[i + 1]), newId, 0, 0, 0, 0)
+        values ("%s", "%s", "%s", "%s", "%s", "%s", "%s","%s", "%s","%s"); 
+        """ % (newId ,str(title[i]), str(artist[i]), str(albumTitle[i + 1]), i + 1, 0, 0, 0, 0, 0)
         cur.execute(query2)
 
     print("crawling starts")
