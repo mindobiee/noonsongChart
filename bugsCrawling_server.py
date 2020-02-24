@@ -14,6 +14,7 @@ artist =[]
 title =[]
 albumTitle=[]
 Ids = []
+song_url =[]
 
 # ignore unique key duplicate warning
 warnings.filterwarnings("ignore")
@@ -44,8 +45,8 @@ def button() :
         next_page = driver.find_element_by_xpath("//*[@id='comments']/div/p[4]/a")
         next_page.send_keys(Keys.ENTER)
         driver.implicitly_wait(3)  # seconds
-        crawling_num = crawling_num + 1
-        print("# of changing pages :" + str(crawling_num))
+        #crawling_num = crawling_num + 1
+        #print("# of changing pages :" + str(crawling_num))
 
     # interactable error
     except ElementNotInteractableException:
@@ -64,10 +65,10 @@ def crawlcomments(bs,latest_comment,song_num):
     users = [i.get_text().strip() for i in users]
     like = bs.select_one('#container > section.sectionPadding.summaryInfo.summaryTrack > div > div.etcInfo > span > a > span > em').get_text()
     like = like.replace(",", "")
-    print("like: " + like)
+    #print("like: " + like)
 
     newId = Ids[song_num-1]
-    print("newId :" + newId)
+    #print("newId :" + newId)
 
     cur.execute("select like_sum from ex_musicList_bugs where id = %s;", newId)  # 이전 like_sum
     temp = cur.fetchall()
@@ -82,8 +83,8 @@ def crawlcomments(bs,latest_comment,song_num):
         comment_cnt = 0
     else:
         comment_cnt = int(len(users)) - int(temp[0][0])
-    img_url = 'https:' + bs.find(class_='photos').find("a").get('href')
-
+    img_url = bs.find(class_='photos').find('img').get('src')
+    
     query = """
            update musicList_bugs set like_sum = "%s", like_cnt = "%s", comments_sum ="%s", comments_cnt="%s", img_url ="%s" where id = "%s"; 
             """ % (int(like), int(like_cnt), len(users), int(comment_cnt), newId, str(img_url))
@@ -111,7 +112,7 @@ def change_songs(song_num):
 
     source = driver.page_source
     bs = BeautifulSoup(source, 'html.parser')
-    print("crawling #", song_num)
+    #print("crawling #", song_num)
 
     cur.execute("select writerId, comment from comments_bugs where id = %s order by time_of_crawl limit 1;", Ids[song_num-1])
     latest_comment = cur.fetchall()
@@ -132,7 +133,7 @@ def change_songs(song_num):
     # crawling again !
 
     crawlcomments(bs, latest_comment, song_num)
-    print("crawling ends")
+    #print("crawling ends")
 
     # going back to main chart page
     driver.get('https://music.bugs.co.kr/chart')
@@ -165,8 +166,8 @@ if __name__ == '__main__':
 
     #for i,tit in enumerate(title) :
     #    print('%d : %s'%(i+1,tit))
-    for i, art in enumerate(artist):
-        print('%d: %s' % (i + 1, art))
+    #for i, art in enumerate(artist):
+    #    print('%d: %s' % (i + 1, art))
     #for i,alb in enumerate(albumTitle) :
     #    print('%d : %s'%(i+1,alb))
 
@@ -194,8 +195,8 @@ if __name__ == '__main__':
     cur.execute(create_table_musicList_bugs)
 
     for i in range(0, 100):
-        newId = title[i].replace('`','\'').replace('’','\'').replace(',', '#').replace('&', '#').replace('(', '#').replace('[', '#').replace('<', '#').replace('{', '#').split('#')[0] + \
-                albumTitle[i + 1].replace('`','\'').replace('’','\'').replace('<', '').replace('{', '').replace('(', '').replace('[', '').split(' ')[0]
+        newId = title[i].replace('`','\'').replace('‘', '\'').replace(',', '#').replace('&', '#').replace('(', '#').replace('[', '#').replace('<', '#').replace('{', '#').split('#')[0].replace(' ', '') + \
+                albumTitle[i + 1].replace('`','\'').replace('‘', '\'').replace('<', '').replace('{', '').replace('(', '').replace('[', '').split(' ')[0].replace(' ','')
         # 괄호 없애고, albumTitle -> 띄어쓰기 전까지만 출력
         Ids.append(newId)
         query2 = """
