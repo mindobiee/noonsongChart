@@ -9,15 +9,17 @@ cur.execute(query)
 
 create_table_musicList_bugs = """
        create table musicList_bugs(
-           ranking INT,
+           id varchar(100),
            title varchar(100),
            artist varchar(100),
            album_title varchar(100),
-           id varchar(100),
+           ranking INT,
            like_sum INT, 
            like_cnt INT,
            comments_sum INT,
            comments_cnt INT,
+           img_url varchar(200),
+           song_url varchar(200),
            primary key(ranking)
        )ENGINE=InnoDB DEFAULT CHARSET=utf8;
    """
@@ -34,3 +36,6 @@ create_table_comments_bugs="""
 """
 
 cur.execute(create_table_comments_bugs)
+conn.commit()
+cur.close()
+conn.close()
