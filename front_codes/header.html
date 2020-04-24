@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" name = "viewpoint" content="width=device-width, initial-scale=1">
+    <style>
+        /*바꾼것 -> 그래야 드롭다운이 보임.*/
+        
+        .tb{
+            overflow: visible;
+        }
+        .tb a{
+            padding : 0px 15px;
+        }
+         .tb ul{
+            text-align: left;
+            list-style: none;
+        }   
+        .newnav{
+            position: static;
+        }
+        .newnav ul{
+            list-style: none;
+            position: absolute;
+            height: 100px;
+            width: 100px;
+            left: 480px;
+            top: 40px;
+        }
+         .newnav ul li{
+            float: none;
+            margin: 0px;
+            padding: 0px;
+        }
+
+        .open > .newnav ul{
+            display: block;
+            position: absolute;
+        }
+/*
+        .tb-menu{
+            text-align: left;
+            list-style: none;
+        }
+        .tbs{
+            display: block;
+            position: relative;
+            }
+
+        .tbs-menu{
+            position : relative;
+            height: 100px;
+            width: 100px;
+         }
+        .open > .tbs-menu {
+            display: inline-block;
+            position: relative;
+            left: -100px;
+            top: 50px;
+        }
+*/
+    </style>
+</head>
+<body>
+
+    <a href =info.html> <h4 style= "text-align: right"> 차트루란? </h4></a>
+    <div class="controller" >
+        <h1 id ="logo2" style="float : left; margin-left:150px" >
+            <a href = "http://www.chartrue.site/main.php">
+            <img src="logo2.jpg" class="logo" width = "150" height="62"></a>
+        </h1>
+        <div id ="searcher">
+        <form action="search_server.php">
+            <span class= "window" method="get">
+                <input type="text" class="input_text" name="search_word" placeholder="차트루 랭킹이 궁금한 노래를 검색해주세요" autofocus>
+                <button type="submit" class='sch_smit'><img src = "dod.png" height="33px" width="33px" ></button>
+            </span>
+        </form>
+        </div>
+    </div>
+    <div class="tb">
+        <ul>
+            <li><a class="realtime_chart" href="main.php" >실시간</a></li>
+            <li><a class="senti_chart" href="sentimental.php" >감정분석</a></li>
+            <li><a class="hottest_chart" href="hottest_chart.php" >급상승</a></li>
+            <li><a class="daily_chart" href="daily_chart.php" >일간</a></li>
+            <li><a class="hot_artist" href="hotartist.php" >핫아티스트</a></li>
+            <li class="newnav dropdown">
+                <a id="thisbutton" data-toggle="dropdown" class="dropdown-toggle" href="#">음원 3사
+                    <span class="caret"></span></a>
+                    <ul class="dropdown-menu" aria-labelledby="thisbutton">
+                        <li><a class="melon_chart" href="melon_chart.php">멜론</a></li>
+                        <li><a class="bugs_chart" href="bugs_chart.php" >벅스</a></li>
+                        <li><a class="genie_chart" href="genie_chart.php">지니</a></li>
+                    </ul>  
+            </li>
+            <li><a class="comparing" href="compare.php" >비교차트</a></li>
+        </ul>
+    </div>
+    <div>
+    <br><br>
+    <hr>
+    </div>     
+<!--
+    <div class="tb">
+        <ul class="tb-menu">
+            <li><a class="realtime_chart" href="main.php" >실시간</a></li>
+            <li><a class="senti_chart" href="sentimental.php" >감정분석</a></li>
+            <li><a class="hottest_chart" href="hottest_chart.php" >급상승</a></li>
+            <li><a class="daily_chart" href="daily_chart.php" >일간</a></li>
+            <li><a class="hot_artist" href="hotartist.php" >핫아티스트</a></li>
+            <li>
+                <span class="dropdown tbs">
+                <a id="dropdownMenuButton2" class="dropdown-toggle"
+                   aria-haspopup="true" data-toggle="dropdown" href="#">음원3사
+                <span class="caret"></span></a>
+                <ul class="dropdown-menu tbs-menu" aria-labelledby="dropdownMenuButton2" role="listbox">
+                    <li><a class="melon_chart" href="melon_chart.php">멜론</a></li>
+                    <li><a class="bugs_chart" href="bugs_chart.php" >벅스</a></li>
+                    <li><a class="genie_chart" href="genie_chart.php">지니</a></li>
+                </ul>
+                </span>
+            </li>
+            <li><a class="comparing" href="compare.php" >비교차트</a></li>
+        </ul>
+    </div>
+ <hr noshade>
+-->
+
+</body>
+</html>

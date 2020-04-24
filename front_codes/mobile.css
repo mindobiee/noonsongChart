@@ -1,0 +1,29 @@
+
+body{
+    margin:0;
+    padding:0;
+    height: auto;
+}
+section{
+    width:100%;
+    padding : 0;
+    margin : 0;
+}
+table#chart{
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 0;
+}
+table#chart th, td{
+    padding: 0;
+}
+
+aside{
+    width:100%;
+    padding: 0;
+}
+.tb a{
+    float: none;
+    width :100%;
+}
