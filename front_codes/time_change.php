@@ -82,18 +82,7 @@ $query = 'select * from '.$ranking_db.' order by rank asc';
 $result = mysqli_query($conn,$query);
 $rank_temp=0;
 while($row = mysqli_fetch_array($result)){
-//
-//    $query_bugs = 'select * from musicList_bugs where id = "'.$row['id'].'"';
-//    $result_bugs = mysqli_query($conn,$query_bugs);
-//    $rowb = mysqli_fetch_array($result_bugs);
-//
-//    $query_melon = 'select * from musicList_melon where id = "'.$row['id'].'"';
-//    $result_melon = mysqli_query($conn,$query_melon);
-//    $rowm = mysqli_fetch_array($result_melon);
-//
-//    $query_genie = 'select * from musicList_genie where id = "'.$row['id'].'"';
-//    $result_genie = mysqli_query($conn,$query_genie);
-//    $rowg = mysqli_fetch_array($result_genie);
+
     while($row['rank']==$rank_temp)//순위가 같은 랭킹이 나오면 다음으로 건너뛰기!
     {
         $rank_temp = $row['rank'];
