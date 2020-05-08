@@ -17,16 +17,7 @@
     <script src = "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.bundle.min.js"></script>
     <script src = "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.js"></script>
     <script src = "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.min.js"></script>
-    <script>
-       // $('.dropdown-toggle').dropdown();
-//        $('.dropdown').on('show.bs.dropdown', function() {
-//        $('body').append($('.dropdown').css({
-//        position: 'absolute',
-//        left: $('.dropdown').offset().left,
-//        top: $('.dropdown').offset().top
-//        }).detach());
-//});
-    </script>
+
     <style>
         #searcher {
             margin-left: -200px;
@@ -35,7 +26,7 @@
             position: absolute;
             left: 50%;
         }
-    /*바꾼것 -> 그래야 드롭다운이 보임.*/
+    	/* 바꾼것 -> 그래야 드롭다운이 보임.*/
         .tb{
             overflow: visible;
             width: 750px;
@@ -48,7 +39,7 @@
             text-align: left;
             list-style: none;
         }     
-/*        음원3사 엘아이의 클래스이름 */
+	/* 음원3사 엘아이의 클래스이름 */
         .newnav{
             position: static;
         }
@@ -89,8 +80,6 @@
             color: white;
             text-decoration: none;
         }
-
-       
 
     </style>
 </head>
@@ -143,8 +132,6 @@ mysqli_query($conn, "set session character_set_connection=utf8;");
 mysqli_query($conn,"set session character_set_results=utf8;");
 mysqli_query($conn,"set session character_set_client=utf8;");
 
-//$myID = findID();
-//echo("<script language=javascript> aa(\"$myID\"); </script>");
 $sql = "SELECT title FROM ranking_now order by rank limit 5";
 $result = mysqli_query($conn,$sql);
 $idList=[];
@@ -153,13 +140,10 @@ while($row = mysqli_fetch_array($result))
 
 $time_array=[];
 $data=[];
-//echo'<h3 style="text-align: left; margin-left: 100px;">[ 랭킹 변화 추이 ]</h3>';
+
 for( $k=0; $k <5 ; $k++) {
     $data[$k] = [];
     $temp=0;
-    //echo '<div style="margin-left: 100px; color : #737373 ">';
-    //echo '<h4>' . $idList[$k] . '</h4>';
-    //$data= [];
     $time = ltrim(date('Ymd', strtotime('-1 day', time())), '2020');
     $present_time = (int)date("H");
     if ($present_time != 23) {
@@ -182,9 +166,7 @@ for( $k=0; $k <5 ; $k++) {
                             array_push($data[$k], $data[$k][$temp-1]);
                         else
                             array_push($data[$k], 0);
-                    }
-                    //echo '<p>' . $sqlQuery . '</p>';
-                    //echo '<span>[' . $i . ']' . $data[$k][$i] . ' - </span>';
+		    }
 
                 } catch (Exception $exception) {
                     $s = $exception->getMessage();
@@ -214,14 +196,13 @@ for( $k=0; $k <5 ; $k++) {
                     else
                         array_push($data[$k], 0);
                 }
-                //echo '<span>[' . $i . ']' . $data[$k][$i] . ' - </span>';
-            } catch (Exception $exception) {
+             } catch (Exception $exception) {
                 $s = $exception->getMessage();
                 //echo $s;
             }
             $temp+=1;
         }
-        //echo '</div>';
+       
     }
 }
 for($i=0;$i<5;$i++){
@@ -450,6 +431,7 @@ mysqli_close($conn);
 
         },
         options: {
+// 	주석처리를 제외했을 때 그 값에 해당하는 텍스트가 보여짐.		
 //            "hover": {
 //            "animationDuration": 0
 //            },
@@ -482,9 +464,9 @@ mysqli_close($conn);
                         //max : 50
                     },
                     gridLines:{
-						color: 'rgba(255,255,255,1)',
-						lineWidth: 1
-					}
+				color: 'rgba(255,255,255,1)',
+				lineWidth: 1
+			}
                 }]
             }
         }
