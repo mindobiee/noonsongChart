@@ -91,9 +91,8 @@ mysqli_query($conn, "set session character_set_connection=utf8;");
 mysqli_query($conn,"set session character_set_results=utf8;");
 mysqli_query($conn,"set session character_set_client=utf8;");
 
+//song page <- 전 페이지에서 클릭한 title 값 가져오기	
 $title=$_GET['title'];
-//echo'<h2 style="text-align: left; margin-left: 130px;">곡 페이지</h2>';
-
 $sql_n = 'SELECT * FROM ranking_now where title = "'.$title.'"';
 $result_n = mysqli_query($conn,$sql_n);
 $row_n = mysqli_fetch_array($result_n);
@@ -124,8 +123,7 @@ $row_g = mysqli_fetch_array($result_g);
 $sql_b = 'SELECT * FROM musicList_bugs_pre where id = "'.$row['id'].'"';
 $result_b = mysqli_query($conn,$sql_b);
 $row_b = mysqli_fetch_array($result_b);
-       
-//echo'<div id="all_info">';
+   
 echo'<div class="all-info"><div id="image"><img src ='.$row['img_url'].' width = "200" height = "200"></div>';
 echo'<div id="info">';//.$row['title'];
     
@@ -143,33 +141,16 @@ echo'<br><div class="artist_link"><strong> 아티스트&emsp;
     
 echo'<div class="artist_link"><strong> 앨범&emsp;
 <a class="artist_link" title="해당 앨범의 페이지로 넘어갑니다." href="album.php?&album='.$row['album_title'].'" style=" color= black; text-decoration : none;">'.$row['album_title'].'</strong></a></div></div>';
-//echo'<div><strong>순위</strong>&emsp;    '.$row['rank'].'</div>';
-//echo'<div><strong>멜론</strong>&emsp;    '.$row_m['ranking'].'</div>';
-//echo'<div><strong>지니</strong>&emsp;    '.$row_g['ranking'].'</div>';
-//echo'<div><strong>벅스</strong>&emsp;    '.$row_b['ranking'].'</div>';
-//echo'<div><strong>좋아요</strong>&emsp;   <img src="heart2.jpg" width="10" height="10">'.$row['like_sum'].'</div>';
-//echo'<div><strong>댓글수</strong>&emsp;   '.$row['comments_sum'].'</div>';
-//echo'<div><strong>팬수</strong>&emsp;    '.$row['artist_like'].'</div><br>';
-
-//echo'<div id ="com" class="artist_link" title="댓글을 보시려면 눌러주시기 바랍니다.">
-//<a  href="comment2.php?id='.$row['id'].'&title='.$title.'">
-//<img src="comment.png" id="combu">
-//<h3><strong>댓글</strong></h3></a></div></div>';
 echo'<div id="com"><br><br>';
   
 echo'<div class="artist_link" title="댓글을 보시려면 눌러주시기 바랍니다."><strong>댓글&emsp;'.$row['cmts_sum'].'개 &nbsp;</strong>';    
-//echo '&nbsp;('.$row_p['comments_sum_score'].'점)';    
+	
 echo'<a  href="comment2.php?id='.$row['id'].'&title='.$title.'">&emsp;<img src="comicon.png" id="combu"></a></div>'; 
     
 echo'<br><div><strong>감정 분석&emsp; '.round($row['sen_score'],2).'점</strong></div>';
     
 echo'<br><div><strong>좋아요&emsp;   <img src="heart2.jpg" width="10" height="10">'.$row['like_sum'].'</strong></div></div></div>';
-//echo '&nbsp;('.$row_p['like_sum_score'].'점)</div>';
-
-//    
-//echo'<h5 style=" color : gray; display:block; margin-left : 130px; " >&emsp;
-//※ 이 곡의 아티스트와 앨범 및 댓글 페이지를 보시려면 해당 항목을 눌러주기시 바랍니다.</h5>';  
-    
+  
     
 echo'
     <article id = "container">
@@ -242,17 +223,6 @@ echo'
         echo'<tr><td><strong>총 점수</strong></td>';
         echo'<td colspan="5"><strong>'.$row_n['score_sum'].'점</strong></td>';
     
-    
-//        echo'<td title="댓글을 보시려면 눌러주시기 바랍니다."><a href="comment2.php?id='.$row['id'].'&title='.$title.'">#</td><a>';
-//        echo'<td ><strong><img src="heart2.jpg" width="10" height="10">'.$row['like_sum'].'</strong></td>';
-//        echo'<td ><strong>'.$row_p['like_sum_score'].'</strong></td>';
-////        echo'<td ><strong>'.$row['comments_sum'].'</strong></td>';
-//        echo'<td ><strong>'.$row_p['comments_sum_score'].'</strong></td>';
-//        echo'<td ><strong>'.round($row['sen_score'],2).'</strong></td>';//총점 
-//        echo'<td ><strong>'.round($row_p['sen_sum_score'],2).'</strong></td>';//환산     
-//        echo'<td ><strong>'.$row_n['score_sum'].'</strong></td>'; 
-//        echo '</tr>';
-    
         $id = $row['id'];
         
 echo'</tbody>
@@ -272,8 +242,7 @@ echo'
     <canvas id="myChart3"></canvas>
 </div>';
  
-    
-
+   
 $time_array=[];
 $data=[];
 $like=[];
@@ -310,11 +279,7 @@ if($present_time!=23) {
                             array_push($comment, 0);
                         }
                     }
-                    //echo '<p>' . $sqlQuery . '</p>';
-                    //echo '<span>[' . $time_array[$temp] . ']' . $data[$temp] . '</span>';
-                    //echo '<span>' . $like[$temp] . '</span>';
-                    //echo '<span>' . $comment[$temp] . '</span><br>';
-                    $temp+=1;
+                   $temp+=1;
 
                 } catch (Exception $exception) {
                     $s = $exception->getMessage();
@@ -353,11 +318,7 @@ for ($i = 0; $i <= $present_time ; $i += 1) {
                             array_push($comment, 0);
                         }
                 }
-                //echo '<p>' . $sqlQuery . '</p>';
-                //echo '<span>[' . $time_array[$temp] . ']' . $data[$temp] . '</span>';
-                //echo '<span>' . $like[$temp] . '</span>';
-                //echo '<span>' . $comment[$temp] . '</span><br>';
-                
+              
                 $temp+=1;
 
             } catch (Exception $exception) {
@@ -366,15 +327,7 @@ for ($i = 0; $i <= $present_time ; $i += 1) {
             }
         }
     }
-//   for($i=18;$i>=0;i--){
-//       if($i>1){
-//            if($like[$i-1]==0){
-//                $like[$i-1]= $like[$i];
-//                $comment[$i-1]=$comment[$i-1];
-//            }
-//       }
-//   }         
-//    
+
 mysqli_close($conn);
 
 ?>
@@ -392,7 +345,7 @@ mysqli_close($conn);
     var myChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: time,  //배열을 넣으면 분명히 작동은 된다!!!
+            labels: time, 
             datasets: [{
                 label: "순위",
                 data: data0,
@@ -401,7 +354,6 @@ mysqli_close($conn);
                 hoverRadius : 4,
                 fill : false,
                 backgroundColor:'rgba(255,99,132,1)',
-                    //'rgba(255, 99, 132, 0.2)',
                 borderWidth: 2,
                 
             }]
@@ -444,9 +396,9 @@ mysqli_close($conn);
                         //beginAtZero:true,
                     },
                     gridLines:{
-						color: 'rgba(255,255,255,1)',
-						lineWidth: 1
-					}
+				color: 'rgba(255,255,255,1)',
+				lineWidth: 1
+		    }
                 }]
             }
         }
@@ -454,7 +406,7 @@ mysqli_close($conn);
      var myChart2 = new Chart(ctx2, {
         type: 'line',
         data: {
-            labels: time,  //배열을 넣으면 분명히 작동은 된다!!!
+            labels: time,
             datasets: 
             [{
                 label: "좋아요",
@@ -503,9 +455,9 @@ mysqli_close($conn);
                 yAxes: [{
                     display : false,
                     gridLines:{
-						color: 'rgba(255,255,255,1)',
-						lineWidth: 1
-					}
+				color: 'rgba(255,255,255,1)',
+				lineWidth: 1
+			}
                 }]
             }
         }
@@ -513,7 +465,7 @@ mysqli_close($conn);
     var myChart3 = new Chart(ctx3, {
         type: 'line',
         data: {
-            labels: time,  //배열을 넣으면 분명히 작동은 된다!!!
+            labels: time, 
             datasets: 
             [{
                 label: "댓글",
@@ -561,9 +513,9 @@ mysqli_close($conn);
                 yAxes: [{
                     display : false,
                     gridLines:{
-						color: 'rgba(255,255,255,1)',
-						lineWidth: 1
-					}
+				color: 'rgba(255,255,255,1)',
+				lineWidth: 1
+			}
                 }]
             }
         }
