@@ -1,7 +1,5 @@
 $('.dropdown-toggle').dropdown();
 
-function test(){
-}
 $('#myDropdown').on('show.bs.dropdown', function () {
     alert("mydropdown pressed!");
 
@@ -19,15 +17,9 @@ function unfold_table() {
 }
 var hour;
 
-/*$(document).ready(function () {
-    createCoockie("hour");
-});*/
-
 function time_change(obj) {
-    //let x = document.getElementsByClassName("dropdown-item");
-    //var id_by_class = $('.dropdown-item').attr('id');
     var y;
-    var id_by_this= obj.id; //$(obj).attr('id');
+    var id_by_this= obj.id; 
     for(var i = 0; i< 24; i++) {
         if(i < 10){
             if ('0'+toString(i) === toString(id_by_this)) {
